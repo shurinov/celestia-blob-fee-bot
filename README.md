@@ -1,0 +1,1 @@
+# celestia-blob-fee-bot
