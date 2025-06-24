@@ -1,3 +1,10 @@
 import { startBot } from './bot.js';
+import indexerService from './services/indexerService.js';
+import { runMigrations } from './scripts/runMigrations.js';
 
-startBot();
+
+await runMigrations();
+
+//startBot();
+
+indexerService.startIndexing();
