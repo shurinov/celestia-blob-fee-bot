@@ -1,7 +1,6 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
 import blobFeeService from './blobFeeService.js';
-import db from '../config/database.js';
 
 dotenv.config();
 
@@ -16,6 +15,17 @@ function getTotalBlobSizeFromMsg(bodyMessages){
     }
   });
   return totalSize;
+}
+
+function getSignerFromMsg(bodyMessages){
+  if (!Array.isArray(bodyMessages)) return null;
+  let out = null;
+  bodyMessages.forEach(msg => {
+    if (msg['@type'] == '/celestia.blob.v1.MsgPayForBlobs') {
+      out = msg.signer;
+    }
+  });
+  return out;
 }
 
 
@@ -43,10 +53,11 @@ async function getMsgPayForBlobs(height) {
   //console.log(data);
   data.tx_responses.forEach(resp =>{
     const targetData = {
-      height:  resp.height,
+      tx_hash: resp.txhash,
+      signer:  getSignerFromMsg(resp.tx.body.messages),
+      height:  Number(resp.height),
       size:    getTotalBlobSizeFromMsg(resp.tx.body.messages),
       fee:     getUtiaFromFee(resp.tx.auth_info.fee.amount),
-      tx_hash: resp.txhash
     };
     //console.log(targetData);
     out.push(targetData);
@@ -54,6 +65,11 @@ async function getMsgPayForBlobs(height) {
   return out;
 }
 
+
+async function getLatestHeight() {
+  const response = await axios(`${process.env.TIA_API_URL}/cosmos/base/tendermint/v1beta1/blocks/latest`);
+  return response.data.block.header.height;
+}
 
 class IndexerService {
   async fetchAndStoreBlobFees(startHeight) {
@@ -74,12 +90,52 @@ class IndexerService {
     }
   }
 
-
+  REQUEST_COUNT = 1000;
 
   async startIndexing() {
+
     let currentHeight = parseInt(process.env.START_HEIGHT) || 1;
 
-    console.log(await blobFeeService.getMaxHeight());
+    const dbMaxData = await blobFeeService.getMaxHeight();
+    if (!dbMaxData.success) console.error("db error!");
+    const dbHeight = dbMaxData.maxHeight || 1;
+    const chainHeight = await getLatestHeight();
+
+    console.log("Latest db height", dbHeight);
+
+    if (chainHeight - dbHeight >= this.REQUEST_COUNT){
+      const batchNum = Math.floor((chainHeight - dbHeight)/this.REQUEST_COUNT);
+
+      console.log("Run batch data retrieval");
+      console.log("batchNum: ", batchNum);
+      for (let i=0; i < batchNum; i++){
+        currentHeight = dbHeight + this.REQUEST_COUNT*i;
+
+        console.log(`get ${this.REQUEST_COUNT}-size batch from height: ${currentHeight}`);
+        const requests = Array.from({ length: this.REQUEST_COUNT }, (_, index) => {
+          const h = currentHeight + index;
+          return getMsgPayForBlobs(h);
+        });
+        
+        // Выполняем все запросы параллельно
+        const results = await Promise.all(requests);
+        
+        let merged_data = [];
+        results.forEach(item => {
+          merged_data = merged_data.concat(item);
+        });
+
+        //console.log(merged_data);
+        //console.log("obtained: ", merged_data.length, " tx");
+
+        if (merged_data.length > 0) {
+          await blobFeeService.addBatchBlobFees(merged_data);
+          console.log(`Stored ${merged_data.length} blob fees tx`);
+        }
+
+      }
+    }
+    
 
     setInterval(async () => {
       const count = await this.fetchAndStoreBlobFees(currentHeight);

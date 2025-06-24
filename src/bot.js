@@ -1,7 +1,9 @@
 import { Client, GatewayIntentBits } from 'discord.js';
 import cron from 'node-cron';
 import { config } from './config.js';
-import { fetchTiaPrice } from './data.js';
+// import { fetchTiaPrice } from './data.js';
+import blobFeeService from './services/blobFeeService.js';
+
 
 export function startBot() {
   const client = new Client({
@@ -20,9 +22,18 @@ export function startBot() {
   client.login(config.discordToken);
 }
 
-async function updateNickname(client, rate) {
-  if (!rate) return;
-  const nickname = `TIA/USD: ${rate}`;
+async function fetchNickname() {
+  const totalFeeData = await blobFeeService.getTotalFee();
+  const totalFee = Number(totalFeeData.totalFee)/10**6;
+  return  totalFee;
+}
+  
+
+async function updateNickname(client, data) {
+  if (!data) return;
+  //const nickname = `TIA/USD: ${data}`;
+  const nickname = `Fee: ${data}TIA`;
+
   for (const guild of client.guilds.cache.values()) {
     try {
       await guild.members.me.setNickname(nickname.slice(0, 32));
@@ -37,8 +48,8 @@ async function updateNickname(client, rate) {
 function startNicknameUpdate(client) {
   // Планируем задачу каждые 10 минут
   cron.schedule(config.updateInterval, async () => {
-    console.log('Fetching currency rate...');
-    const rate = await fetchTiaPrice();
+    console.log('Fetching data...');
+    const rate = await fetchNickname();
     console.log(rate);
     if (rate) {
       await updateNickname(client, rate);
@@ -46,5 +57,5 @@ function startNicknameUpdate(client) {
   });
 
   // Выполняем обновление сразу при старте
-  fetchTiaPrice().then((rate) => updateNickname(client, rate));
+  fetchNickname().then((rate) => updateNickname(client, rate));
 }

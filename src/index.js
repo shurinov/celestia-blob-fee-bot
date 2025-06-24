@@ -5,6 +5,6 @@ import { runMigrations } from './scripts/runMigrations.js';
 
 await runMigrations();
 
-//startBot();
+startBot();
 
 indexerService.startIndexing();
