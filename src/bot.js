@@ -22,16 +22,14 @@ export function startBot() {
 
 async function updateNickname(client, rate) {
   if (!rate) return;
-
   const nickname = `TIA/USD: ${rate}`;
-
-  // Обновляем никнейм на всех серверах
   for (const guild of client.guilds.cache.values()) {
     try {
-      await guild.members.me.setNickname(nickname.slice(0, 32)); // Ограничиваем до 32 символов
+      await guild.members.me.setNickname(nickname.slice(0, 32));
       console.log(`Updated nickname in ${guild.name} to ${nickname}`);
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Задержка 1 сек
     } catch (error) {
-      console.error(`Error updating nickname in ${guild.name}: ${error.message}`);
+      console.error(`Error in ${guild.name}: ${error.message}`);
     }
   }
 }
