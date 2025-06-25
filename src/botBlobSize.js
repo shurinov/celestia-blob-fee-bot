@@ -18,14 +18,7 @@ export function startBot() {
     startNicknameUpdate(client);
   });
 
-  client.login(config.discordTokenBlobFee);
-}
-
-
-async function fetchNickname() {
-  const totalFeeData = await blobFeeService.getTotalFee();
-  //const totalFee = Number(totalFeeData.totalFee)/10**6;
-  return blobFeeService.tiaAmountFormat(totalFeeData.totalFee);
+  client.login(config.discordTokenBlobSize);
 }
 
 async function fetchBlobSize() {
@@ -33,11 +26,9 @@ async function fetchBlobSize() {
   return blobFeeService.blobSizeFormat(data.totalBlobSize);
 }
 
-
 async function updateNickname(client, data) {
   if (!data) return;
-  //const nickname = `TIA/USD: ${data}`;
-  const nickname = `BlobsFee: ${data} TIA`;
+  const nickname = `BlobsSize: ${data}`;
 
   for (const guild of client.guilds.cache.values()) {
     try {
@@ -50,12 +41,11 @@ async function updateNickname(client, data) {
   }
 }
 
-
 function startNicknameUpdate(client) {
   // Планируем задачу каждые 10 минут
   cron.schedule(config.updateInterval, async () => {
     console.log('Fetching data...');
-    const rate = await fetchNickname();
+    const rate = await fetchBlobSize();
     console.log(rate);
     if (rate) {
       await updateNickname(client, rate);
@@ -63,5 +53,5 @@ function startNicknameUpdate(client) {
   });
 
   // Выполняем обновление сразу при старте
-  fetchNickname().then((rate) => updateNickname(client, rate));
+  fetchBlobSize().then((rate) => updateNickname(client, rate));
 }
