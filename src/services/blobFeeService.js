@@ -28,6 +28,15 @@ class BlobFeeService {
     }
   }
 
+  async getTotalBlobSize() {
+    try {
+      const totalBlobSize = await blobFeeRepository.getTotalBlobSize();
+      return { success: true, totalBlobSize };
+    } catch (error) {
+      throw new Error(`Service error: ${error.message}`);
+    }
+  }
+  
   async getMaxHeight() {
     try {
       const maxHeight = await blobFeeRepository.getMaxHeight();

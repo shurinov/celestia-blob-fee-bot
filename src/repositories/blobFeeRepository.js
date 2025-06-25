@@ -28,6 +28,15 @@ class BlobFeeRepository {
     }
   }
 
+  async getTotalBlobSize() {
+    try {
+      const result = await db('blob_fee').sum('size as total_size').first();
+      return result.total_size || 0;
+    } catch (error) {
+      throw new Error(`Error calculating total fee: ${error.message}`);
+    }
+  }
+
   async getBlobFees(limit = 10) {
     try {
       return await db('blob_fee')

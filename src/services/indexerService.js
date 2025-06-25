@@ -39,6 +39,7 @@ function getUtiaFromFee(feeAmount){
   });
   return totalFee;
 }
+  
 
 
 async function getMsgPayForBlobs(height) {
@@ -66,6 +67,7 @@ async function getMsgPayForBlobs(height) {
 }
 
 
+
 async function getLatestHeight() {
   const response = await axios(`${process.env.TIA_API_URL}/cosmos/base/tendermint/v1beta1/blocks/latest`);
   return response.data.block.header.height;
@@ -90,59 +92,64 @@ class IndexerService {
     }
   }
 
+  async fetchBlobFeeBatchAndStoreToDb(startHeight, batchLen){
+    const requests = Array.from({ length: batchLen }, (_, index) => {
+      const h = startHeight + index;
+      //console.log(h);
+      return getMsgPayForBlobs(h);
+    });
+    
+    // Выполняем все запросы параллельно
+    const results = await Promise.all(requests);
+    
+    let merged_data = [];
+    results.forEach(item => {
+      merged_data = merged_data.concat(item);
+    });
+    //console.log(merged_data);
+    //console.log("obtained: ", merged_data.length, " tx");
+    if (merged_data.length > 0) {
+      await blobFeeService.addBatchBlobFees(merged_data);
+      console.log(`Stored ${merged_data.length} blob fees tx`);
+    }
+  }
+  
+
   REQUEST_COUNT = 1000;
 
   async startIndexing() {
 
-    let currentHeight = parseInt(process.env.START_HEIGHT) || 1;
-
     const dbMaxData = await blobFeeService.getMaxHeight();
     if (!dbMaxData.success) console.error("db error!");
     const dbHeight = dbMaxData.maxHeight || 1;
-    const chainHeight = await getLatestHeight();
-
-    console.log("Latest db height", dbHeight);
-
-    if (chainHeight - dbHeight >= this.REQUEST_COUNT){
-      const batchNum = Math.floor((chainHeight - dbHeight)/this.REQUEST_COUNT);
-
-      console.log("Run batch data retrieval");
-      console.log("batchNum: ", batchNum);
-      for (let i=0; i < batchNum; i++){
-        currentHeight = dbHeight + this.REQUEST_COUNT*i;
-
-        console.log(`get ${this.REQUEST_COUNT}-size batch from height: ${currentHeight}`);
-        const requests = Array.from({ length: this.REQUEST_COUNT }, (_, index) => {
-          const h = currentHeight + index;
-          return getMsgPayForBlobs(h);
-        });
-        
-        // Выполняем все запросы параллельно
-        const results = await Promise.all(requests);
-        
-        let merged_data = [];
-        results.forEach(item => {
-          merged_data = merged_data.concat(item);
-        });
-
-        //console.log(merged_data);
-        //console.log("obtained: ", merged_data.length, " tx");
-
-        if (merged_data.length > 0) {
-          await blobFeeService.addBatchBlobFees(merged_data);
-          console.log(`Stored ${merged_data.length} blob fees tx`);
-        }
-
-      }
-    }
-    
+    console.log("Latest db height: ", dbHeight);
+    let currentHeight = dbHeight;
 
     setInterval(async () => {
-      const count = await this.fetchAndStoreBlobFees(currentHeight);
-      console.log("count: ",count);
-      if (count != null) {
-        currentHeight++;
-        //process.env.START_HEIGHT = currentHeight.toString();
+      const chainHeight = Number(await getLatestHeight());
+      console.log("Latest chain height: ", chainHeight);
+      
+      if (chainHeight - currentHeight >= this.REQUEST_COUNT){
+
+        console.log("Run batch data retrieval");
+        const batchNum = Math.floor((chainHeight - currentHeight)/this.REQUEST_COUNT);
+        console.log("batchNum: ", batchNum);
+        
+        for (let i=0; i < batchNum; i++){
+          console.log(`get ${this.REQUEST_COUNT}-size batch from height: ${currentHeight}`);
+          
+          await this.fetchBlobFeeBatchAndStoreToDb(currentHeight, this.REQUEST_COUNT);
+          // add batch size to current height
+          currentHeight += this.REQUEST_COUNT;
+
+          // debug delay
+          //await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      } else if (chainHeight - currentHeight > 0) {
+
+        console.log(`get ${(chainHeight - currentHeight)}-size batch from height: ${currentHeight}`);
+        await this.fetchBlobFeeBatchAndStoreToDb(currentHeight, (chainHeight - currentHeight));
+        currentHeight = chainHeight;
       }
     }, 2000);
   }
