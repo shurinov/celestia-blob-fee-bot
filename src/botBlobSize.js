@@ -28,7 +28,7 @@ async function fetchBlobSize() {
 
 async function updateNickname(client, data) {
   if (!data) return;
-  const nickname = `BlobsSize: ${data}`;
+  const nickname = `${data} total blobs`;
 
   for (const guild of client.guilds.cache.values()) {
     try {

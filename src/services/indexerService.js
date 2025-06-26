@@ -149,7 +149,7 @@ class IndexerService {
 
         console.log(`get ${(chainHeight - currentHeight)}-size batch from height: ${currentHeight}`);
         await this.fetchBlobFeeBatchAndStoreToDb(currentHeight, (chainHeight - currentHeight));
-        currentHeight = chainHeight;
+        currentHeight += (chainHeight - currentHeight);
       }
     }, 2000);
   }
