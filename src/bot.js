@@ -86,7 +86,9 @@ client.on('messageCreate', async (message) => {
 
   // !info command handling
   if (command === 'info') {
-    const totalFee = await fetchBlobsFee();
+    //const totalFee = await fetchBlobsFee();
+    const totalFeeData = await blobFeeService.getTotalFee();
+    const totalFee = `${blobFeeService.tiaAmountFormat(totalFeeData.totalFee)}TIA  ( ${totalFeeData.totalFee/10**6} TIA )`;
     const data = await blobFeeService.getTotalBlobSize();
     const totalSize = `${blobFeeService.blobSizeFormat(data.totalBlobSize)} ( ${data.totalBlobSize} bit)`;
     const height = await fetchLatestHeightInDb();
@@ -96,7 +98,7 @@ client.on('messageCreate', async (message) => {
       .setColor('#00FF00')
       .addFields(
         { name: 'Total blobs size: ', value: totalSize.toString()},
-        { name: 'Total payed blobs fee: ', value: totalFee.toString()+'TIA'},
+        { name: 'Total payed blobs fee: ', value: totalFee},
         { name: 'Latest blob fee block height: ', value: height.toString()},
         // { name: 'Bot uptime', value: `<t:${Math.floor(client.readyTimestamp / 1000)}:R>`, inline: true }
       )
