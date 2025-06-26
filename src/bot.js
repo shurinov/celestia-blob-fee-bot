@@ -97,8 +97,8 @@ client.on('messageCreate', async (message) => {
       .addFields(
         { name: 'Total blobs size: ', value: totalSize.toString()},
         { name: 'Total payed blobs fee: ', value: totalFee.toString()+'TIA'},
-        { name: 'Latest blob fee block: ', value: height.toString()},
-        { name: 'Bot uptime', value: `<t:${Math.floor(client.readyTimestamp / 1000)}:R>`, inline: true }
+        { name: 'Latest blob fee block height: ', value: height.toString()},
+        // { name: 'Bot uptime', value: `<t:${Math.floor(client.readyTimestamp / 1000)}:R>`, inline: true }
       )
       .setTimestamp()
       .setFooter({ text: 'Celestia Blob Fee Bot', iconURL: client.user.displayAvatarURL() });

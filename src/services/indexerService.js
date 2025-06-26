@@ -126,32 +126,36 @@ class IndexerService {
     let currentHeight = dbHeight;
 
     setInterval(async () => {
-      const chainHeight = Number(await getLatestHeight());
-      console.log("Latest chain height: ", chainHeight);
-      
-      if (chainHeight - currentHeight >= this.REQUEST_COUNT){
-
-        console.log("Run batch data retrieval");
-        const batchNum = Math.floor((chainHeight - currentHeight)/this.REQUEST_COUNT);
-        console.log("batchNum: ", batchNum);
+      try{
+        const chainHeight = Number(await getLatestHeight());
+        console.log("Latest chain height: ", chainHeight);
         
-        for (let i=0; i < batchNum; i++){
-          console.log(`get ${this.REQUEST_COUNT}-size batch from height: ${currentHeight}`);
+        if (chainHeight - currentHeight >= this.REQUEST_COUNT){
+
+          console.log("Run batch data retrieval");
+          const batchNum = Math.floor((chainHeight - currentHeight)/this.REQUEST_COUNT);
+          console.log("batchNum: ", batchNum);
           
-          await this.fetchBlobFeeBatchAndStoreToDb(currentHeight, this.REQUEST_COUNT);
-          // add batch size to current height
-          currentHeight += this.REQUEST_COUNT;
+          for (let i=0; i < batchNum; i++){
+            console.log(`get ${this.REQUEST_COUNT}-size batch from height: ${currentHeight}`);
+            
+            await this.fetchBlobFeeBatchAndStoreToDb(currentHeight, this.REQUEST_COUNT);
+            // add batch size to current height
+            currentHeight += this.REQUEST_COUNT;
 
-          // debug delay
-          //await new Promise(resolve => setTimeout(resolve, 2000));
+            // debug delay
+            //await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+        } else if (chainHeight - currentHeight > 0) {
+
+          console.log(`get ${(chainHeight - currentHeight)}-size batch from height: ${currentHeight}`);
+          await this.fetchBlobFeeBatchAndStoreToDb(currentHeight, (chainHeight - currentHeight));
+          currentHeight += (chainHeight - currentHeight);
         }
-      } else if (chainHeight - currentHeight > 0) {
-
-        console.log(`get ${(chainHeight - currentHeight)}-size batch from height: ${currentHeight}`);
-        await this.fetchBlobFeeBatchAndStoreToDb(currentHeight, (chainHeight - currentHeight));
-        currentHeight += (chainHeight - currentHeight);
+      } catch (error) {
+        console.error(`Indexer error: ${error.message}`);
       }
-    }, 2000);
+    }, 3000);
   }
 }
 
