@@ -5,17 +5,16 @@ import { createDatabase } from './createDatabase.js';
 
 export async function runMigrations() {
   try {
-    // Сначала создаем базу данных
     await createDatabase();
 
-    // Инициализируем Knex с конфигурацией
+    // Knex init
     const knexInstance = knex(config.development);
 
-    // Выполняем миграции
+    // Run migrations
     await knexInstance.migrate.latest();
     console.log('Migrations applied successfully');
 
-    // Закрываем соединение
+    // Close connection
     await knexInstance.destroy();
   } catch (error) {
     console.error('Error running migrations:', error.message);

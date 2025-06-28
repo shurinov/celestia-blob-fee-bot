@@ -14,7 +14,6 @@ export function startBot() {
 
   client.once('ready', () => {
     console.log(`Logged in as ${client.user.tag}`);
-    // Запускаем задачу обновления никнейма
     startNicknameUpdate(client);
   });
 
@@ -34,7 +33,7 @@ async function updateNickname(client, data) {
     try {
       await guild.members.me.setNickname(nickname.slice(0, 32));
       console.log(`Updated nickname in ${guild.name} to ${nickname}`);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Задержка 1 сек
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
       console.error(`Error in ${guild.name}: ${error.message}`);
     }
@@ -42,7 +41,6 @@ async function updateNickname(client, data) {
 }
 
 function startNicknameUpdate(client) {
-  // Планируем задачу каждые 10 минут
   cron.schedule(config.updateInterval, async () => {
     console.log('Fetching data...');
     const rate = await fetchBlobSize();
@@ -52,6 +50,6 @@ function startNicknameUpdate(client) {
     }
   });
 
-  // Выполняем обновление сразу при старте
+  // update after start
   fetchBlobSize().then((rate) => updateNickname(client, rate));
 }

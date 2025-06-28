@@ -28,7 +28,7 @@ async function updateNickname(client, data) {
     try {
       await guild.members.me.setNickname(nickname.slice(0, 32));
       console.log(`Updated nickname in ${guild.name} to ${nickname}`);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Задержка 1 сек
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // delay 1 sec for each server
     } catch (error) {
       console.error(`Error in ${guild.name}: ${error.message}`);
     }

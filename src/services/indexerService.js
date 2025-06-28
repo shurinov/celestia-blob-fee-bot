@@ -41,7 +41,6 @@ function getUtiaFromFee(feeAmount){
 }
   
 
-
 async function getMsgPayForBlobs(height) {
   //console.log("try to get data from ", height, ' ', config.nodeApiUrl);
   const eventMethod = "/celestia.blob.v1.MsgPayForBlobs";
@@ -67,11 +66,11 @@ async function getMsgPayForBlobs(height) {
 }
 
 
-
 async function getLatestHeight() {
   const response = await axios(`${process.env.TIA_API_URL}/cosmos/base/tendermint/v1beta1/blocks/latest`);
   return response.data.block.header.height;
 }
+
 
 class IndexerService {
   async fetchAndStoreBlobFees(startHeight) {
