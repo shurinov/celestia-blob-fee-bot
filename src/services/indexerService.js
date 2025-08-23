@@ -43,15 +43,32 @@ function getUtiaFromFee(feeAmount){
 
 async function getMsgPayForBlobs(height) {
   //console.log("try to get data from ", height, ' ', config.nodeApiUrl);
-  const eventMethod = "/celestia.blob.v1.MsgPayForBlobs";
+  // const eventMethod = "/celestia.blob.v1.MsgPayForBlobs";
+  // const response = await axios(
+  //   `${process.env.TIA_API_URL}/cosmos/tx/v1beta1/txs?events=tx.height=${height}&events=message.action='${eventMethod}'`,
+  //    {headers: {'Accept': 'application/json'}}
+  // );
+  // const data = response.data;
+
   const response = await axios(
-    `${process.env.TIA_API_URL}/cosmos/tx/v1beta1/txs?events=tx.height=${height}&events=message.action='${eventMethod}'`,
+    `${process.env.TIA_API_URL}/cosmos/tx/v1beta1/txs?query=tx.height=${height}'`,
      {headers: {'Accept': 'application/json'}}
   );
   const data = response.data;
-  let out = [];
-  //console.log(data);
+ 
+  let tx_responses = [];
   data.tx_responses.forEach(resp =>{
+    //console.log(resp);
+    resp.events.forEach(event =>{
+      if (event?.type == 'celestia.blob.v1.EventPayForBlobs')
+        //console.log(resp);
+        tx_responses.push(resp);
+    })
+    //console.log(resp.tx['@type']);
+  });
+  
+  let out = [];
+  tx_responses.forEach(resp =>{
     const targetData = {
       tx_hash: resp.txhash,
       signer:  getSignerFromMsg(resp.tx.body.messages),
@@ -118,6 +135,8 @@ class IndexerService {
 
   async startIndexing() {
 
+    console.log(`Use TIA Archive API endpoint: ${process.env.TIA_API_URL}`);
+
     const dbMaxData = await blobFeeService.getMaxHeight();
     if (!dbMaxData.success) console.error("db error!");
     const dbHeight = dbMaxData.maxHeight || 1;
@@ -128,6 +147,7 @@ class IndexerService {
       try{
         const chainHeight = Number(await getLatestHeight());
         console.log("Latest chain height: ", chainHeight);
+        //console.log("Current height: ", currentHeight);
         
         if (chainHeight - currentHeight >= this.REQUEST_COUNT){
 
@@ -152,7 +172,7 @@ class IndexerService {
           currentHeight += (chainHeight - currentHeight);
         }
       } catch (error) {
-        console.error(`Indexer error: ${error.message}`);
+        console.error(`ERROR indexer: ${error.message}`);
       }
     }, 3000);
   }

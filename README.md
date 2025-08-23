@@ -17,7 +17,7 @@ To start the project you will need:
 
 * Celestia Archival API endpoint
 
-* 2 discord-bot tokens ( One for Fee and one for Blobs size displaying)
+* 2 discord-bot tokens ( One for Fee and one for Blobs size displaying, see https://discord.com/developers/applications)
 
 ### Steps
 
@@ -35,3 +35,7 @@ To start the project you will need:
 it's going to take a while to find all blob-fee transactions
 
 
+### run with PM2
+```bash
+pm2 start src/index.js --name "tia-discord-blob-bot"
+```
