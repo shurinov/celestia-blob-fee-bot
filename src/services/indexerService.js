@@ -42,16 +42,8 @@ function getUtiaFromFee(feeAmount){
   
 
 async function getMsgPayForBlobs(height) {
-  //console.log("try to get data from ", height, ' ', config.nodeApiUrl);
-  // const eventMethod = "/celestia.blob.v1.MsgPayForBlobs";
-  // const response = await axios(
-  //   `${process.env.TIA_API_URL}/cosmos/tx/v1beta1/txs?events=tx.height=${height}&events=message.action='${eventMethod}'`,
-  //    {headers: {'Accept': 'application/json'}}
-  // );
-  // const data = response.data;
-
   const response = await axios(
-    `${process.env.TIA_API_URL}/cosmos/tx/v1beta1/txs?query=tx.height=${height}'`,
+    `${process.env.TIA_API_URL}/cosmos/tx/v1beta1/txs?query=tx.height=${height}`,
      {headers: {'Accept': 'application/json'}}
   );
   const data = response.data;
@@ -66,6 +58,15 @@ async function getMsgPayForBlobs(height) {
     })
     //console.log(resp.tx['@type']);
   });
+
+  let timestamp = null;
+  if (tx_responses.length > 0) {
+    const response_block = await axios(
+      `${process.env.TIA_API_URL}/cosmos/base/tendermint/v1beta1/blocks/${height}`,
+      {headers: {'Accept': 'application/json'}}
+    );
+    timestamp = response_block.data.block.header.time;
+  }
   
   let out = [];
   tx_responses.forEach(resp =>{
@@ -75,6 +76,7 @@ async function getMsgPayForBlobs(height) {
       height:  Number(resp.height),
       size:    getTotalBlobSizeFromMsg(resp.tx.body.messages),
       fee:     getUtiaFromFee(resp.tx.auth_info.fee.amount),
+      timestamp
     };
     //console.log(targetData);
     out.push(targetData);

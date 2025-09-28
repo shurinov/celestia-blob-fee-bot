@@ -12,7 +12,7 @@ const db = knex({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
   },
-  pool: { min: 0, max: 10 },
+  pool: { min: 2, max: 20 },
 });
 
 export default db;
