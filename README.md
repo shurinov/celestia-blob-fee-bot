@@ -39,3 +39,20 @@ it's going to take a while to find all blob-fee transactions
 ```bash
 pm2 start src/index.js --name "tia-discord-blob-bot"
 ```
+
+### Database migrations
+
+run this command for apply all migrations:
+
+```bash
+npx knex migrate:latest --knexfile ./knexfile.js
+```
+
+migration rollback:
+
+```bash
+npx knex migrate:rollback --knexfile ./knexfile.js
+```
+
+1. Add timestamp column and height, timestamp indexing
+
