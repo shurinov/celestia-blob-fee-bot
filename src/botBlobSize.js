@@ -22,21 +22,42 @@ export function startBot() {
 
 async function fetchBlobSize() {
   const data = await blobFeeService.getTotalBlobSize();
-  return blobFeeService.blobSizeFormat(data.totalBlobSize);
+  const change24h = await blobFeeService.get24hBlobSize();
+  return {
+    total: blobFeeService.blobSizeFormat(data.totalBlobSize),
+    change24h: blobFeeService.blobSizeFormat(change24h.blobSize24h),
+  };
 }
 
-async function updateNickname(client, data) {
+async function updateNickname(client, data, change) {
   if (!data) return;
-  const nickname = `${data} total blobs`;
+  //const nickname = `${data} `;
+  const nickname = `${data} | + ${change}`;
+  const status = `Blobs size total | 24h change`;
 
   for (const guild of client.guilds.cache.values()) {
     try {
       await guild.members.me.setNickname(nickname.slice(0, 32));
       console.log(`Updated nickname in ${guild.name} to ${nickname}`);
+
       await new Promise((resolve) => setTimeout(resolve, 1000));
     } catch (error) {
       console.error(`Error in ${guild.name}: ${error.message}`);
     }
+  }
+
+  // Update status globaly
+  try {
+    await client.user.setPresence({
+      activities: [{
+        name: status.slice(0, 128), // for compatibility
+        state: status.slice(0, 128), // Custom
+        type: 4, // Custom status
+      }],
+      status: 'online', // 'online', 'idle', 'dnd', 'invisible'
+    });
+  } catch (error) {
+    console.error(`Error while update status: ${error.message}`);
   }
 }
 
@@ -46,10 +67,10 @@ function startNicknameUpdate(client) {
     const rate = await fetchBlobSize();
     console.log(rate);
     if (rate) {
-      await updateNickname(client, rate);
+      await updateNickname(client, rate.total, rate.change24h);
     }
   });
 
   // update after start
-  fetchBlobSize().then((rate) => updateNickname(client, rate));
+  fetchBlobSize().then((rate) => updateNickname(client, rate.total, rate.change24h));
 }

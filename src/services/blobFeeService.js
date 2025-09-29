@@ -32,6 +32,15 @@ class BlobFeeService {
     }
   }
 
+  async get24hFee() {
+    try {
+      const fee24h = await blobFeeRepository.get24hFee();
+      return { success: true, fee24h };
+    } catch (error) {
+      throw new Error(`Service error: ${error.message}`);
+    }
+  }
+
   async getTotalBlobSize() {
     try {
       const totalBlobSize = await blobFeeRepository.getTotalBlobSize();
@@ -40,6 +49,16 @@ class BlobFeeService {
       throw new Error(`Service error: ${error.message}`);
     }
   }
+
+  async get24hBlobSize() {
+    try {
+      const blobSize24h = await blobFeeRepository.get24hBlobSize();
+      return { success: true, blobSize24h };
+    } catch (error) {
+      throw new Error(`Service error: ${error.message}`);
+    }
+  }
+  
   
   async getMaxHeight() {
     try {

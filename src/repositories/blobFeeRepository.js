@@ -28,10 +28,34 @@ class BlobFeeRepository {
     }
   }
 
+  async get24hFee() {
+    try {
+      const result = await db('blob_fee')
+        .sum('fee as period_fee')
+        .where('timestamp', '>=', db.raw("NOW() - INTERVAL '24 hours'"))
+        .first();
+      return result.period_fee || 0;
+    } catch (error) {
+      throw new Error(`Error calculating total fee: ${error.message}`);
+    }
+  }
+  
   async getTotalBlobSize() {
     try {
       const result = await db('blob_fee').sum('size as total_size').first();
       return result.total_size || 0;
+    } catch (error) {
+      throw new Error(`Error calculating total fee: ${error.message}`);
+    }
+  }
+
+  async get24hBlobSize() {
+    try {
+      const result = await db('blob_fee')
+        .sum('size as period_size')
+        .where('timestamp', '>=', db.raw("NOW() - INTERVAL '24 hours'"))
+        .first();
+      return result.period_size || 0;
     } catch (error) {
       throw new Error(`Error calculating total fee: ${error.message}`);
     }
