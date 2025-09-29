@@ -26,7 +26,7 @@ async function fetchLatestHeightInDb() {
 
 async function updateNickname(client, data, change) {
   if (!data) return;
-  const nickname = `${data}TIA | + ${change} TIA`;
+  const nickname = `${data}TIA | +${change} TIA`;
   const status = `Blobs fee total | 24h change`;
 
   for (const guild of client.guilds.cache.values()) {

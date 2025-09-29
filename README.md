@@ -56,3 +56,8 @@ npx knex migrate:rollback --knexfile ./knexfile.js
 
 1. Add timestamp column and height, timestamp indexing
 
+running a script to populate timestamps in existing database rows:
+
+```bash
+node src/scripts/fillEachTimestamp.js
+```
