@@ -57,15 +57,15 @@ export async function getMsgPayForBlobs(height) {
 //console.log(await getMsgPayForBlobs(1000002));
 
 
-const START_BLOCK = 4000000; // Начальный номер блока
-const REQUEST_COUNT = 1000; // Количество запросов
+const START_BLOCK = 4000000;
+const REQUEST_COUNT = 500;
 
 const requests = Array.from({ length: REQUEST_COUNT }, (_, index) => {
   const blockNumber = START_BLOCK + index;
   return getMsgPayForBlobs(blockNumber);
 });
 
-// Выполняем все запросы параллельно
+// oarallel execution
 const results = await Promise.all(requests);
 
 let merged_data = [];

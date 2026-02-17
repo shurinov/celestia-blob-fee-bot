@@ -39,7 +39,26 @@ function getUtiaFromFee(feeAmount){
   });
   return totalFee;
 }
-  
+
+
+function getNamespaceFromMsg(bodyMessages){
+  if (!Array.isArray(bodyMessages)) return null;
+  let out = null;
+  bodyMessages.forEach(msg => {
+    if (msg['@type'] == '/celestia.blob.v1.MsgPayForBlobs') {
+      // console.log(msg)
+      out = [];
+      msg.namespaces.forEach(item => {
+        const buffer = Buffer.from(item, 'base64');
+        let buf_cut = buffer.slice(19,)
+        out.push(buffer.slice(19,).toString('hex'))
+      })
+      
+    }
+  });
+  return out;
+}
+
 
 async function getMsgPayForBlobs(height) {
   const response = await axios(
@@ -71,11 +90,12 @@ async function getMsgPayForBlobs(height) {
   let out = [];
   tx_responses.forEach(resp =>{
     const targetData = {
-      tx_hash: resp.txhash,
-      signer:  getSignerFromMsg(resp.tx.body.messages),
-      height:  Number(resp.height),
-      size:    getTotalBlobSizeFromMsg(resp.tx.body.messages),
-      fee:     getUtiaFromFee(resp.tx.auth_info.fee.amount),
+      tx_hash:    resp.txhash,
+      signer:     getSignerFromMsg(resp.tx.body.messages),
+      height:     Number(resp.height),
+      size:       getTotalBlobSizeFromMsg(resp.tx.body.messages),
+      fee:        getUtiaFromFee(resp.tx.auth_info.fee.amount),
+      namespaces: getNamespaceFromMsg(resp.tx.body.messages),
       timestamp
     };
     //console.log(targetData);
@@ -117,7 +137,7 @@ class IndexerService {
       return getMsgPayForBlobs(h);
     });
     
-    // Выполняем все запросы параллельно
+    // parallel execution
     const results = await Promise.all(requests);
     
     let merged_data = [];
@@ -133,7 +153,7 @@ class IndexerService {
   }
   
 
-  REQUEST_COUNT = 1000;
+  REQUEST_COUNT = 100;
 
   async startIndexing() {
 
@@ -174,7 +194,7 @@ class IndexerService {
           currentHeight += (chainHeight - currentHeight);
         }
       } catch (error) {
-        console.error(`ERROR indexer: ${error.message}`);
+        console.error(`ERROR indexer: ${error}`);
       }
     }, 3000);
   }

@@ -58,7 +58,15 @@ class BlobFeeService {
       throw new Error(`Service error: ${error.message}`);
     }
   }
-  
+
+  async getUniqueNamespaces(hours) {
+    try {
+      const namespacesCnt = await blobFeeRepository.getUniqueNamespacesLastHours(hours);
+      return { success: true, namespacesCnt };
+    } catch (error) {
+      throw new Error(`Service error: ${error.message}`);
+    }
+  }
   
   async getMaxHeight() {
     try {
@@ -68,7 +76,7 @@ class BlobFeeService {
       throw new Error(`Service error: ${error.message}`);
     }
   }
-
+  
   tiaAmountFormat(amount){
     const amountTia = amount/10**6;
     if (amountTia < 1) return amountTia;
