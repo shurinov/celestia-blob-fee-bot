@@ -20,20 +20,24 @@ export function startBot() {
   client.login(config.discordTokenBlobSize);
 }
 
-async function fetchBlobSize() {
+async function fetchData() {
   const data = await blobFeeService.getTotalBlobSize();
   const change24h = await blobFeeService.get24hBlobSize();
+  const namespaces7d = await blobFeeService.getUniqueNamespaces(24*7);
   return {
     total: blobFeeService.blobSizeFormat(data.totalBlobSize),
     change24h: blobFeeService.blobSizeFormat(change24h.blobSize24h),
+    namespaces7d: namespaces7d?.namespacesCnt,
   };
 }
 
-async function updateNickname(client, data, change) {
+
+
+async function updateNickname(client, data, change, namespaces7d) {
   if (!data) return;
   //const nickname = `${data} `;
-  const nickname = `${data} | +${change}`;
-  const status = `Blobs size total | 24h change`;
+  const nickname = `${data} | +${change} | ${namespaces7d}`;
+  const status = `Blobs size total | 24h change | 7-day unique namespaces activity`;
 
   for (const guild of client.guilds.cache.values()) {
     try {
@@ -64,13 +68,13 @@ async function updateNickname(client, data, change) {
 function startNicknameUpdate(client) {
   cron.schedule(config.updateInterval, async () => {
     console.log('Fetching data...');
-    const rate = await fetchBlobSize();
+    const rate = await fetchData();
     console.log(rate);
     if (rate) {
-      await updateNickname(client, rate.total, rate.change24h);
+      await updateNickname(client, rate.total, rate.change24h, rate.namespaces7d);
     }
   });
 
   // update after start
-  fetchBlobSize().then((rate) => updateNickname(client, rate.total, rate.change24h));
+  fetchData().then((rate) => updateNickname(client, rate.total, rate.change24h, rate.namespaces7d));
 }
