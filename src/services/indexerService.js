@@ -153,7 +153,8 @@ class IndexerService {
   }
   
 
-  REQUEST_COUNT = 100;
+  REQUEST_COUNT = parseInt(process.env.INDEXER_REQ_NUMB ?? 10);
+  REQUEST_TIMEOUT_MS = parseInt(process.env.INDEXER_REQ_TIMEOUT_MS ?? 1000);
 
   async startIndexing() {
 
@@ -194,9 +195,20 @@ class IndexerService {
           currentHeight += (chainHeight - currentHeight);
         }
       } catch (error) {
-        console.error(`ERROR indexer: ${error}`);
+        
+        //console.error(`ERROR indexer: ${error}`);
+        const { url, method, data, params, headers } = error.config;
+        console.log({ url, method, data, params, headers });
+        
+        // error.request — сам XMLHttpRequest объект
+        // console.log('Request:', error.request);
+        
+        // error.response — ответ сервера (если есть)
+        //console.log('Response:', error.response);
+
+        console.log('status:', error.response?.status,' ', error.response?.statusText);
       }
-    }, 3000);
+    }, this.REQUEST_TIMEOUT_MS);
   }
 }
 
